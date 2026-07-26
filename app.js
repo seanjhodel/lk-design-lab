@@ -1,14 +1,14 @@
-/* Signet Apparel Designer - upload art, visualize on apparel, live embroidery/print checks */
+/* Signet Apparel Designer - compact embed: upload or text, see it in 3D, pick print or embroidery */
 /* global fabric */
 (function () {
   'use strict';
 
   // ---------- Catalog ----------
   var PRODUCTS = {
-    tee:        { name: 'T-Shirt',      ico: '👕' },
-    longsleeve: { name: 'Long Sleeve',  ico: '🥼' },
-    crewneck:   { name: 'Sweatshirt',   ico: '🧥' },
-    hoodie:     { name: 'Hoodie',       ico: '🧥' }
+    tee:        { name: 'T-Shirt',     ico: '👕', lbl: 'TEE' },
+    longsleeve: { name: 'Long Sleeve', ico: '🥼', lbl: 'LONG' },
+    crewneck:   { name: 'Sweatshirt',  ico: '🧥', lbl: 'CREW' },
+    hoodie:     { name: 'Hoodie',      ico: '🧥', lbl: 'HOOD' }
   };
 
   var COLORS = [
@@ -19,18 +19,15 @@
   ];
 
   var FONTS = ['Anton', 'Archivo Black', 'Bebas Neue', 'Oswald', 'Montserrat', 'Alfa Slab One', 'Pacifico', 'Lobster', 'Permanent Marker', 'Courier Prime'];
-  var TEXT_COLORS = ['#ffffff', '#111111', '#005CB9', '#40B4E5', '#c8102e', '#f2a900', '#007a33', '#e86c29', '#4b3b8f', '#9ea2a2'];
+  var TEXT_COLORS = ['#ffffff', '#111111', '#005CB9', '#40B4E5', '#c8102e', '#f2a900', '#007a33', '#4b3b8f'];
 
   var DESIGN_W = 520, DESIGN_H = 620;
   var QUOTE_EMAIL = 'david.kent@signetmktg.com';
 
-  // Print locations. ppi = canvas px per real inch at that location.
-  // Embroidery norms from Signet: left chest 3.5" wide standard, 8k-12k stitches;
-  // jacket/full back 20k-35k+; 15 thread colors max.
   var LOCATIONS = {
-    ff: { label: 'Full Front', side: 'front', ppi: 13.33, maxStitches: 25000, normW: 12 },
-    lc: { label: 'Left Chest', side: 'front', ppi: 15,    maxStitches: 12000, normW: 3.5 },
-    fb: { label: 'Full Back',  side: 'back',  ppi: 13.33, maxStitches: 35000, normW: 12 }
+    ff: { label: 'Full Front', side: 'front', ppi: 13.33 },
+    lc: { label: 'Left Chest', side: 'front', ppi: 15 },
+    fb: { label: 'Full Back',  side: 'back',  ppi: 13.33 }
   };
 
   function r(x, y, w, h) { return { x: x, y: y, w: w, h: h }; }
@@ -44,7 +41,7 @@
     return FRONT_AREAS[prod];
   }
 
-  // ---------- State ----------
+  // ---------- State (in-memory only, nothing is saved) ----------
   var state = {
     product: 'tee',
     color: '#ffffff',
@@ -52,8 +49,7 @@
     fabric: 'solid',
     loc: 'ff',
     deco: 'print',
-    designs: { ff: null, lc: null, fb: null },
-    name: 'Untitled design'
+    designs: { ff: null, lc: null, fb: null }
   };
 
   // ---------- Color helpers ----------
@@ -68,7 +64,7 @@
     return 'rgb(' + c.join(',') + ')';
   }
 
-  // ---------- Garment SVG ----------
+  // ---------- Garment SVG (loading fallback only) ----------
   function neckline(side, prod) {
     if (side === 'back' || prod === 'hoodie') return 'C235 116 285 116 305 104';
     if (prod === 'crewneck') return 'C232 124 288 124 305 104';
@@ -92,65 +88,23 @@
   }
 
   function shirtSVG(prod, side, hex) {
-    var dark = shade(hex, -0.28);
-    var mid = shade(hex, -0.14);
     var body = bodyPath(prod, side);
-    var extras = '';
-
-    if (prod !== 'hoodie') {
-      var nk = neckline(side, prod);
-      var dip = (side === 'front' && prod !== 'crewneck') ? 122 : 110;
-      extras += '<path d="M215 104 ' + nk + ' L299 98 C286 ' + dip + ' 234 ' + dip + ' 221 98 Z" fill="' + mid + '" opacity="0.9"/>';
-    }
-
-    if (prod === 'hoodie') {
-      if (side === 'front') {
-        extras += '<path d="M196 100 C202 150 318 150 324 100 C342 122 322 172 260 172 C198 172 178 122 196 100 Z" fill="' + dark + '"/>';
-        extras += '<path d="M215 104 C235 116 285 116 305 104 C296 134 224 134 215 104 Z" fill="' + shade(hex, -0.45) + '"/>';
-        extras += '<line x1="243" y1="160" x2="238" y2="212" stroke="' + shade(hex, 0.55) + '" stroke-width="4" stroke-linecap="round"/>';
-        extras += '<line x1="277" y1="160" x2="282" y2="212" stroke="' + shade(hex, 0.55) + '" stroke-width="4" stroke-linecap="round"/>';
-        extras += '<path d="M186 428 L334 428 L350 552 L170 552 Z" fill="' + mid + '" opacity="0.55"/>';
-        extras += '<path d="M186 428 L214 444 L214 540" fill="none" stroke="' + dark + '" stroke-width="2" opacity="0.5"/>';
-        extras += '<path d="M334 428 L306 444 L306 540" fill="none" stroke="' + dark + '" stroke-width="2" opacity="0.5"/>';
-      } else {
-        extras += '<path d="M198 106 C186 52 334 52 322 106 C310 146 210 146 198 106 Z" fill="' + dark + '"/>';
-      }
-    }
-
-    if (prod === 'crewneck' || prod === 'hoodie') {
-      extras += '<rect x="' + (prod === 'hoodie' ? 148 : 154) + '" y="546" width="' + (prod === 'hoodie' ? 224 : 212) + '" height="18" rx="4" fill="' + mid + '" opacity="0.5"/>';
-      extras += '<rect x="374" y="408" width="58" height="18" rx="4" transform="rotate(5 403 417)" fill="' + mid + '" opacity="0.5"/>';
-      extras += '<rect x="88" y="408" width="58" height="18" rx="4" transform="rotate(-5 117 417)" fill="' + mid + '" opacity="0.5"/>';
-    }
-
-    if (prod === 'tee') {
-      extras += '<path d="M392 258 L366 232 M128 258 L154 232" stroke="rgba(0,0,0,.16)" stroke-width="2" fill="none"/>';
-      extras += '<line x1="158" y1="548" x2="362" y2="548" stroke="rgba(0,0,0,.12)" stroke-width="2"/>';
-    }
-
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 620">' +
-      '<defs><linearGradient id="gShade" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/>' +
-      '<stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>' +
-      '<stop offset="1" stop-color="#000000" stop-opacity="0.14"/></linearGradient></defs>' +
       '<path d="' + body + '" fill="' + hex + '" stroke="' + shade(hex, -0.4) + '" stroke-width="2.5" stroke-linejoin="round"/>' +
-      extras +
-      '<path d="' + body + '" fill="url(#gShade)"/>' +
       '</svg>';
   }
 
   // ---------- DOM ----------
   function $(id) { return document.getElementById(id); }
   var els = {
-    downloadBtn: $('downloadBtn'),
-    productGrid: $('productGrid'), colorGrid: $('colorGrid'), colorName: $('colorName'),
-    textInput: $('textInput'), fontSelect: $('fontSelect'), textColors: $('textColors'),
-    outlineColor: $('outlineColor'), outlineWidth: $('outlineWidth'), outlineVal: $('outlineVal'), addTextBtn: $('addTextBtn'),
-    uploadInput: $('uploadInput'),
-    stageWrap: $('stageWrap'), shirtSvg: $('shirtSvg'), printArea: $('printArea'),
+    uploadBtn: $('uploadBtn'), textBtn: $('textBtn'), uploadInput: $('uploadInput'),
+    textRow: $('textRow'), textInput: $('textInput'), fontSelect: $('fontSelect'),
+    textColors: $('textColors'), addTextBtn: $('addTextBtn'),
+    stageArea: $('stageArea'), stageWrap: $('stageWrap'), shirtSvg: $('shirtSvg'), printArea: $('printArea'),
     stage3d: $('stage3d'), stage3dLoading: $('stage3dLoading'),
     objToolbar: $('objToolbar'),
-    quoteBtn: $('quoteBtn'), toast: $('toast')
+    productGrid: $('productGrid'), colorGrid: $('colorGrid'), heatherBtn: $('heatherBtn'),
+    downloadBtn: $('downloadBtn'), quoteBtn: $('quoteBtn'), toast: $('toast')
   };
 
   // ---------- Fabric canvas ----------
@@ -160,10 +114,8 @@
   });
   fabric.Object.prototype.set({
     transparentCorners: false, cornerColor: '#005CB9', cornerStrokeColor: '#ffffff',
-    cornerStyle: 'circle', cornerSize: 10, borderColor: '#005CB9', padding: 4
+    cornerStyle: 'circle', cornerSize: 12, borderColor: '#005CB9', padding: 4
   });
-  // keep custom analysis data through JSON save/load
-  fabric.Object.prototype.stateProperties && fabric.Object.prototype.stateProperties.push('sigAnalysis');
   var origToObject = fabric.Object.prototype.toObject;
   fabric.Object.prototype.toObject = function (props) {
     return origToObject.call(this, (props || []).concat(['sigAnalysis']));
@@ -184,8 +136,7 @@
     canvas.requestRenderAll();
   }
 
-  // Realistic garment background: straight-on render of the selected garment's
-  // 3D model. The illustrated SVG only shows while a model is still downloading.
+  // Realistic garment background from the 3D model; SVG only while a model loads
   var bgToken = 0;
   var realisticShown = {};
   function renderShirt() {
@@ -200,7 +151,7 @@
         if (t !== bgToken) return;
         realisticShown[state.product] = true;
         els.shirtSvg.innerHTML = '<img src="' + url + '" alt="">';
-      }).catch(function () { /* model unavailable: SVG fallback stays */ });
+      }).catch(function () { /* fallback SVG stays */ });
     }
   }
 
@@ -212,9 +163,12 @@
   if (window.Shirt3D) boot3D();
   else window.addEventListener('shirt3d-api', boot3D, { once: true });
 
+  // Size the stage to fit BOTH the width and height available (square embeds)
   function resize() {
-    var avail = els.stage3d.parentElement.clientWidth || DESIGN_W;
-    var w = Math.min(DESIGN_W, Math.max(280, avail));
+    var availW = els.stageArea.clientWidth || DESIGN_W;
+    var availH = els.stageArea.clientHeight || DESIGN_H;
+    var w = Math.min(DESIGN_W, availW, Math.floor(availH * DESIGN_W / DESIGN_H));
+    w = Math.max(200, w);
     zoom = w / DESIGN_W;
     canvas.setDimensions({ width: w, height: DESIGN_H * zoom });
     canvas.setZoom(zoom);
@@ -254,13 +208,11 @@
     }).catch(function () {});
   }
 
-  var hintEl = null;
   function setView(v) {
     if (v === view) return;
-    if (v === '3d' && !window.Shirt3D) { toast('3D preview is unavailable in this browser.'); return; }
+    if (v === '3d' && !window.Shirt3D) { toast('3D is unavailable in this browser.'); return; }
     view = v;
-    if (!hintEl) hintEl = document.querySelector('.hint');
-    document.querySelectorAll('.view-toggle .side-btn').forEach(function (b) {
+    document.querySelectorAll('.view-toggle .pill').forEach(function (b) {
       b.classList.toggle('active', b.dataset.view === v);
     });
     var is3d = v === '3d';
@@ -268,9 +220,6 @@
     els.objToolbar.classList.add('hidden');
     els.stageWrap.classList.toggle('hidden', is3d);
     els.stage3d.classList.toggle('hidden', !is3d);
-    hintEl.textContent = is3d
-      ? 'Drag to rotate, scroll to zoom.'
-      : "The dashed box is the print area for this location. Anything outside it won't be decorated.";
     if (is3d) {
       var w = parseFloat(els.stage3d.style.width) || DESIGN_W;
       var h = parseFloat(els.stage3d.style.height) || DESIGN_H;
@@ -280,11 +229,11 @@
             els.stage3dLoading.classList.add('hidden');
             update3D();
           }).catch(function () {
-            els.stage3dLoading.textContent = '3D model could not load. Check your connection.';
+            els.stage3dLoading.textContent = '3D could not load.';
           });
           window.Shirt3D.resizeTo(w, h);
         } catch (e) {
-          els.stage3dLoading.textContent = '3D preview is not supported in this browser.';
+          els.stage3dLoading.textContent = '3D is not supported here.';
         }
       } else {
         window.Shirt3D.setRunning(true);
@@ -296,7 +245,7 @@
     }
   }
 
-  document.querySelectorAll('.view-toggle .side-btn').forEach(function (b) {
+  document.querySelectorAll('.view-toggle .pill').forEach(function (b) {
     b.addEventListener('click', function () { setView(b.dataset.view); });
   });
 
@@ -312,7 +261,7 @@
     canvas.clear();
     var finish = function () {
       canvas.on('object:added', onCanvasChange);
-      renderShirt(); applyClip(); refreshPanels();
+      renderShirt(); applyClip(); updateDots();
       if (done) done();
     };
     if (data) canvas.loadFromJSON(data, function () { canvas.renderAll(); finish(); });
@@ -323,11 +272,15 @@
     if (view === '3d') setView('2d');
     if (loc === state.loc) return;
     serializeLoc();
-    document.querySelectorAll('#locToggle .side-btn').forEach(function (b) {
+    document.querySelectorAll('#locToggle .pill').forEach(function (b) {
       b.classList.toggle('active', b.dataset.loc === loc);
     });
-    loadLoc(loc, autosave);
+    loadLoc(loc);
   }
+
+  document.querySelectorAll('#locToggle .pill').forEach(function (b) {
+    b.addEventListener('click', function () { switchLoc(b.dataset.loc); });
+  });
 
   function locHasArt(loc) {
     if (loc === state.loc) return canvas.getObjects().length > 0;
@@ -342,7 +295,9 @@
     });
   }
 
-  // ---------- Artwork analysis (runs in-browser on the uploaded image) ----------
+  function onCanvasChange() { updateDots(); }
+
+  // ---------- Artwork analysis (for the quote email color count) ----------
   function analyzeImageData(imgEl) {
     var s = 160 / Math.max(imgEl.width, imgEl.height);
     var w = Math.max(1, Math.round(imgEl.width * s)), h = Math.max(1, Math.round(imgEl.height * s));
@@ -352,134 +307,46 @@
     ctx.drawImage(imgEl, 0, 0, w, h);
     var d;
     try { d = ctx.getImageData(0, 0, w, h).data; } catch (e) { return null; }
-    var bins = {}, opaque = 0, semi = 0, total = w * h;
+    var bins = {}, opaque = 0;
     for (var i = 0; i < d.length; i += 4) {
-      var a = d[i + 3];
-      if (a < 16) continue;
-      if (a < 240) semi++;
+      if (d[i + 3] < 16) continue;
       opaque++;
       var key = (d[i] >> 4) + '-' + (d[i + 1] >> 4) + '-' + (d[i + 2] >> 4);
       bins[key] = (bins[key] || 0) + 1;
     }
     if (!opaque) return null;
-    var significant = 0, totalBins = 0;
+    var significant = 0;
     Object.keys(bins).forEach(function (k) {
-      totalBins++;
       if (bins[k] / opaque > 0.005) significant++;
     });
-    return {
-      colors: significant,
-      rawBins: totalBins,
-      hasTransparency: (total - opaque) / total > 0.02,
-      hasSemiTransparency: semi / opaque > 0.05,
-      likelyGradient: totalBins > 400
-    };
+    return { colors: significant };
   }
 
-  // ---------- Design summary + embroidery/print check ----------
   function collectDesignFacts() {
     var loc = LOCATIONS[state.loc];
     var objs = canvas.getObjects();
-    var facts = {
-      objects: objs.length, widthIn: 0, heightIn: 0,
-      colors: 0, hasGradient: false, hasSemiTransparency: false,
-      minTextIn: null, sqIn: 0
-    };
+    var facts = { objects: objs.length, widthIn: 0, heightIn: 0, colors: 0 };
     if (!objs.length) return facts;
-
     var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9;
     var vectorFills = {};
     objs.forEach(function (o) {
       var b = o.getBoundingRect(true, true);
       minX = Math.min(minX, b.left); minY = Math.min(minY, b.top);
       maxX = Math.max(maxX, b.left + b.width); maxY = Math.max(maxY, b.top + b.height);
-      if (o.type === 'image' && o.sigAnalysis) {
-        facts.colors += o.sigAnalysis.colors;
-        if (o.sigAnalysis.likelyGradient) facts.hasGradient = true;
-        if (o.sigAnalysis.hasSemiTransparency) facts.hasSemiTransparency = true;
-      } else {
-        if (o.fill) vectorFills[o.fill] = 1;
-        if (o.stroke && o.strokeWidth) vectorFills[o.stroke] = 1;
-      }
-      if (o.type === 'i-text') {
-        var hIn = o.getScaledHeight() / loc.ppi / (o.text.split('\n').length || 1);
-        facts.minTextIn = facts.minTextIn === null ? hIn : Math.min(facts.minTextIn, hIn);
-      }
+      if (o.type === 'image' && o.sigAnalysis) facts.colors += o.sigAnalysis.colors;
+      else if (o.fill) vectorFills[o.fill] = 1;
     });
     facts.colors += Object.keys(vectorFills).length;
     facts.widthIn = (maxX - minX) / loc.ppi;
     facts.heightIn = (maxY - minY) / loc.ppi;
-    // decorated square inches (sum of object footprints, capped at bounding box)
-    var sq = 0;
-    objs.forEach(function (o) {
-      var b = o.getBoundingRect(true, true);
-      sq += (b.width / loc.ppi) * (b.height / loc.ppi);
-    });
-    facts.sqIn = Math.min(sq, facts.widthIn * facts.heightIn);
     return facts;
   }
 
-  function refreshPanels() {
-    updateDots();
-  }
-
-  // ---------- Autosave ----------
-  var saveTimer = null;
-  function autosave() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(function () {
-      serializeLoc();
-      try { localStorage.setItem('signet-apparel-designer', JSON.stringify(snapshot())); }
-      catch (e) { /* storage full on image-heavy designs; ignore */ }
-    }, 800);
-  }
-
-  function snapshot() {
-    serializeLoc();
-    return { v: 2, name: state.name, product: state.product, color: state.color, colorName: state.colorName, fabric: state.fabric, deco: state.deco, designs: state.designs };
-  }
-
-  function restore(snap) {
-    state.name = snap.name || 'Untitled design';
-    state.product = PRODUCTS[snap.product] ? snap.product : 'tee';
-    state.color = snap.color || '#ffffff';
-    state.colorName = snap.colorName || 'White';
-    state.deco = snap.deco === 'embroidery' ? 'embroidery' : 'print';
-    state.fabric = snap.fabric === 'heather' ? 'heather' : 'solid';
-    state.designs = snap.designs || { ff: null, lc: null, fb: null };
-    markSelected(els.productGrid, '[data-product="' + state.product + '"]');
-    markSelected(els.colorGrid, '[data-hex="' + state.color + '"]');
-    els.colorName.textContent = state.colorName;
-    document.querySelectorAll('#decoToggle .side-btn').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.deco === state.deco);
-    });
-    document.querySelectorAll('#fabricToggle .deco-btn').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.fabric === state.fabric);
-    });
-    document.querySelectorAll('#locToggle .side-btn').forEach(function (b) {
-      b.classList.toggle('active', b.dataset.loc === 'ff');
-    });
-    loadLoc('ff');
-  }
-
-  function onCanvasChange() { refreshPanels(); autosave(); }
-
-  // ---------- Selection / toolbar ----------
+  // ---------- Selection toolbar ----------
   function activeObj() { return canvas.getActiveObject(); }
 
-  function syncTextPanel(obj) {
-    if (!obj || obj.type !== 'i-text') return;
-    els.textInput.value = obj.text;
-    els.fontSelect.value = obj.fontFamily;
-    els.outlineWidth.value = obj.strokeWidth || 0;
-    els.outlineVal.textContent = obj.strokeWidth || 0;
-    if (obj.stroke) els.outlineColor.value = obj.stroke;
-  }
-
-  canvas.on('selection:created', function (e) { els.objToolbar.classList.remove('hidden'); syncTextPanel(e.selected && e.selected[0]); });
-  canvas.on('selection:updated', function (e) { syncTextPanel(e.selected && e.selected[0]); });
+  canvas.on('selection:created', function () { els.objToolbar.classList.remove('hidden'); });
   canvas.on('selection:cleared', function () { els.objToolbar.classList.add('hidden'); });
-  canvas.on('object:modified', onCanvasChange);
   canvas.on('object:added', onCanvasChange);
   canvas.on('object:removed', onCanvasChange);
 
@@ -496,8 +363,6 @@
       }, ['sigAnalysis']);
     }
     if (act === 'flip') { obj.set('flipX', !obj.flipX); }
-    if (act === 'front') { canvas.bringForward(obj); }
-    if (act === 'back') { canvas.sendBackwards(obj); }
     if (act === 'center') { var a = currentArea(); obj.setPositionByOrigin(new fabric.Point(a.x + a.w / 2, obj.getCenterPoint().y), 'center', 'center'); }
     obj.setCoords(); canvas.requestRenderAll(); onCanvasChange();
   });
@@ -509,79 +374,14 @@
     }
   });
 
-  // ---------- Text ----------
-  FONTS.forEach(function (f) {
-    var o = document.createElement('option');
-    o.value = f; o.textContent = f; o.style.fontFamily = f;
-    els.fontSelect.appendChild(o);
+  // ---------- Upload (big button, straight to file picker) ----------
+  els.uploadBtn.addEventListener('click', function () {
+    if (view === '3d') setView('2d');
+    els.textRow.classList.add('hidden');
+    resize();
+    els.uploadInput.click();
   });
 
-  var currentTextColor = '#111111';
-
-  function addText() {
-    var val = els.textInput.value.trim() || 'YOUR TEXT';
-    var font = els.fontSelect.value;
-    var a = currentArea();
-    document.fonts.load('40px "' + font + '"').then(function () {
-      var t = new fabric.IText(val, {
-        fontFamily: font, fontSize: 42, fill: currentTextColor,
-        stroke: parseFloat(els.outlineWidth.value) > 0 ? els.outlineColor.value : null,
-        strokeWidth: parseFloat(els.outlineWidth.value) || 0,
-        paintFirst: 'stroke', textAlign: 'center',
-        originX: 'center', originY: 'center',
-        left: a.x + a.w / 2, top: a.y + a.h / 2
-      });
-      var maxW = a.w * 0.95;
-      if (t.width > maxW) t.scaleToWidth(maxW);
-      canvas.add(t); canvas.setActiveObject(t); canvas.requestRenderAll();
-    });
-  }
-  els.addTextBtn.addEventListener('click', addText);
-
-  els.textInput.addEventListener('input', function () {
-    var obj = activeObj();
-    if (obj && obj.type === 'i-text') { obj.set('text', els.textInput.value); canvas.requestRenderAll(); autosave(); }
-  });
-  els.fontSelect.addEventListener('change', function () {
-    var font = els.fontSelect.value;
-    document.fonts.load('40px "' + font + '"').then(function () {
-      var obj = activeObj();
-      if (obj && obj.type === 'i-text') { obj.set('fontFamily', font); obj.initDimensions(); canvas.requestRenderAll(); autosave(); }
-    });
-  });
-  function applyOutline() {
-    var obj = activeObj();
-    var w = parseFloat(els.outlineWidth.value) || 0;
-    els.outlineVal.textContent = w;
-    if (obj && obj.type === 'i-text') {
-      obj.set({ stroke: w > 0 ? els.outlineColor.value : null, strokeWidth: w, paintFirst: 'stroke' });
-      canvas.requestRenderAll(); autosave();
-    }
-  }
-  els.outlineWidth.addEventListener('input', applyOutline);
-  els.outlineColor.addEventListener('input', applyOutline);
-
-  function buildSwatchRow(container, onPick) {
-    TEXT_COLORS.forEach(function (hex, i) {
-      var s = document.createElement('button');
-      s.className = 'swatch' + (i === 1 ? ' selected' : '');
-      s.style.background = hex;
-      s.dataset.hex = hex;
-      s.addEventListener('click', function () {
-        container.querySelectorAll('.swatch').forEach(function (x) { x.classList.remove('selected'); });
-        s.classList.add('selected');
-        onPick(hex);
-      });
-      container.appendChild(s);
-    });
-  }
-  buildSwatchRow(els.textColors, function (hex) {
-    currentTextColor = hex;
-    var obj = activeObj();
-    if (obj && obj.type === 'i-text') { obj.set('fill', hex); canvas.requestRenderAll(); onCanvasChange(); }
-  });
-
-  // ---------- Upload ----------
   function placeImage(dataUrl) {
     fabric.Image.fromURL(dataUrl, function (img) {
       var a = currentArea();
@@ -589,22 +389,71 @@
       img.set({ originX: 'center', originY: 'center', left: a.x + a.w / 2, top: a.y + a.h / 2, scaleX: scale, scaleY: scale });
       img.sigAnalysis = analyzeImageData(img.getElement());
       canvas.add(img); canvas.setActiveObject(img); canvas.requestRenderAll();
-      toast('Artwork added. Drag and resize it inside the dashed print area.');
+      toast('Drag and resize your logo inside the dashed area.');
     }, { crossOrigin: 'anonymous' });
   }
-  function readFile(file) {
+  els.uploadInput.addEventListener('change', function () {
+    var file = els.uploadInput.files[0];
+    els.uploadInput.value = '';
     if (!file || !/^image\//.test(file.type)) { toast('Please choose an image file.'); return; }
     var rd = new FileReader();
     rd.onload = function () { placeImage(rd.result); };
     rd.readAsDataURL(file);
-  }
-  els.uploadInput.addEventListener('change', function () { readFile(els.uploadInput.files[0]); els.uploadInput.value = ''; });
-  var dz = document.querySelector('.dropzone');
-  ['dragover', 'dragenter'].forEach(function (ev) { dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.add('drag'); }); });
-  ['dragleave', 'drop'].forEach(function (ev) { dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.remove('drag'); }); });
-  dz.addEventListener('drop', function (e) { readFile(e.dataTransfer.files[0]); });
+  });
 
-  // ---------- Products & colors UI ----------
+  // ---------- Text (big button toggles one simple row) ----------
+  FONTS.forEach(function (f) {
+    var o = document.createElement('option');
+    o.value = f; o.textContent = f; o.style.fontFamily = f;
+    els.fontSelect.appendChild(o);
+  });
+
+  var currentTextColor = '#111111';
+  TEXT_COLORS.forEach(function (hex, i) {
+    var s = document.createElement('button');
+    s.className = 'swatch' + (i === 1 ? ' selected' : '');
+    s.style.background = hex;
+    s.addEventListener('click', function () {
+      els.textColors.querySelectorAll('.swatch').forEach(function (x) { x.classList.remove('selected'); });
+      s.classList.add('selected');
+      currentTextColor = hex;
+      var obj = activeObj();
+      if (obj && obj.type === 'i-text') { obj.set('fill', hex); canvas.requestRenderAll(); }
+    });
+    els.textColors.appendChild(s);
+  });
+
+  els.textBtn.addEventListener('click', function () {
+    if (view === '3d') setView('2d');
+    els.textRow.classList.toggle('hidden');
+    resize();
+    if (!els.textRow.classList.contains('hidden')) els.textInput.focus();
+  });
+
+  els.addTextBtn.addEventListener('click', function () {
+    var val = els.textInput.value.trim() || 'YOUR TEXT';
+    var font = els.fontSelect.value;
+    var a = currentArea();
+    document.fonts.load('40px "' + font + '"').then(function () {
+      var t = new fabric.IText(val, {
+        fontFamily: font, fontSize: 42, fill: currentTextColor,
+        textAlign: 'center', originX: 'center', originY: 'center',
+        left: a.x + a.w / 2, top: a.y + a.h / 2
+      });
+      var maxW = a.w * 0.95;
+      if (t.width > maxW) t.scaleToWidth(maxW);
+      canvas.add(t); canvas.setActiveObject(t); canvas.requestRenderAll();
+      els.textRow.classList.add('hidden');
+      resize();
+    });
+  });
+
+  els.textInput.addEventListener('input', function () {
+    var obj = activeObj();
+    if (obj && obj.type === 'i-text') { obj.set('text', els.textInput.value); canvas.requestRenderAll(); }
+  });
+
+  // ---------- Garment + color pickers ----------
   function markSelected(container, selector) {
     container.querySelectorAll('.selected').forEach(function (x) { x.classList.remove('selected'); });
     var el = container.querySelector(selector);
@@ -614,19 +463,18 @@
   Object.keys(PRODUCTS).forEach(function (key, i) {
     var p = PRODUCTS[key];
     var b = document.createElement('button');
-    b.className = 'product-card' + (i === 0 ? ' selected' : '');
+    b.className = 'prod-btn' + (i === 0 ? ' selected' : '');
     b.dataset.product = key;
-    b.innerHTML = '<span class="p-ico">' + p.ico + '</span><span><span class="p-name">' + p.name + '</span><br><span class="p-price">Screen print or embroidery</span></span>';
-    b.addEventListener('click', function () { setProduct(key); });
+    b.title = p.name;
+    b.innerHTML = '<span class="p-ico">' + p.ico + '</span><span class="p-lbl">' + p.lbl + '</span>';
+    b.addEventListener('click', function () {
+      state.product = key;
+      markSelected(els.productGrid, '[data-product="' + key + '"]');
+      renderShirt(); applyClip();
+      if (view === '3d') update3D();
+    });
     els.productGrid.appendChild(b);
   });
-
-  function setProduct(key) {
-    state.product = key;
-    markSelected(els.productGrid, '[data-product="' + key + '"]');
-    renderShirt(); applyClip(); refreshPanels(); autosave();
-    if (view === '3d') update3D();
-  }
 
   COLORS.forEach(function (c, i) {
     var s = document.createElement('button');
@@ -636,50 +484,30 @@
     s.title = c[0];
     s.addEventListener('click', function () {
       state.color = c[1]; state.colorName = c[0];
-      els.colorName.textContent = c[0];
       markSelected(els.colorGrid, '[data-hex="' + c[1] + '"]');
-      renderShirt(); refreshPanels(); autosave();
+      renderShirt();
       if (window.Shirt3D && window.Shirt3D.isInit()) window.Shirt3D.setColor(c[1]);
     });
     els.colorGrid.appendChild(s);
   });
 
+  els.heatherBtn.addEventListener('click', function () {
+    state.fabric = state.fabric === 'heather' ? 'solid' : 'heather';
+    els.heatherBtn.classList.toggle('active', state.fabric === 'heather');
+    if (window.Shirt3D && window.Shirt3D.isInit()) window.Shirt3D.setFabric(state.fabric);
+    renderShirt();
+  });
+
   // ---------- Decoration toggle ----------
-  document.querySelectorAll('#decoToggle .side-btn').forEach(function (b) {
+  document.querySelectorAll('#decoToggle .pill').forEach(function (b) {
     b.addEventListener('click', function () {
       state.deco = b.dataset.deco;
-      document.querySelectorAll('#decoToggle .side-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
-      autosave();
+      document.querySelectorAll('#decoToggle .pill').forEach(function (x) { x.classList.toggle('active', x === b); });
       if (view === '3d') update3D();
     });
   });
 
-  // ---------- Fabric toggle (solid color vs heather texture) ----------
-  document.querySelectorAll('#fabricToggle .deco-btn').forEach(function (b) {
-    b.addEventListener('click', function () {
-      state.fabric = b.dataset.fabric === 'heather' ? 'heather' : 'solid';
-      document.querySelectorAll('#fabricToggle .deco-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
-      if (window.Shirt3D && window.Shirt3D.isInit()) window.Shirt3D.setFabric(state.fabric);
-      renderShirt(); refreshPanels(); autosave();
-    });
-  });
-
-  // ---------- Tabs ----------
-  document.querySelectorAll('.tab').forEach(function (t) {
-    t.addEventListener('click', function () {
-      document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
-      t.classList.add('active');
-      document.querySelectorAll('.panel-section').forEach(function (p) {
-        p.classList.toggle('hidden', p.dataset.panel !== t.dataset.tab);
-      });
-    });
-  });
-
-  document.querySelectorAll('#locToggle .side-btn').forEach(function (b) {
-    b.addEventListener('click', function () { switchLoc(b.dataset.loc); });
-  });
-
-  // ---------- Export ----------
+  // ---------- Download + quote ----------
   function downloadBlob(blob, filename) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -688,9 +516,6 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
   }
 
-  function slug(s) { return (s || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'design'; }
-
-  // PNG mockup with the Signet caption bar burned in
   function drawCaption(ctx, W, y0, barH) {
     var facts = collectDesignFacts();
     var loc = LOCATIONS[state.loc];
@@ -700,11 +525,9 @@
     ctx.font = '800 30px "Open Sans", sans-serif';
     ctx.fillText('SIGNET', 28, y0 + 40);
     ctx.font = '600 22px "Open Sans", sans-serif';
-    var parts = [PRODUCTS[state.product].name, state.colorName + (state.fabric === 'heather' ? ' Heather' : ''), loc.label];
-    if (facts.objects) {
-      parts.push(facts.widthIn.toFixed(1) + '" x ' + facts.heightIn.toFixed(1) + '"');
-      parts.push(Math.max(1, facts.colors) + ' color' + (facts.colors > 1 ? 's' : ''));
-    }
+    var parts = [PRODUCTS[state.product].name, state.colorName + (state.fabric === 'heather' ? ' Heather' : ''), loc.label,
+      state.deco === 'embroidery' ? 'Embroidery' : 'Screen Print'];
+    if (facts.objects) parts.push(facts.widthIn.toFixed(1) + '" x ' + facts.heightIn.toFixed(1) + '"');
     ctx.fillText(parts.join('  ·  '), 28, y0 + 74);
     ctx.font = '700 22px "Open Sans", sans-serif';
     ctx.fillStyle = '#40B4E5';
@@ -730,7 +553,7 @@
           c3.drawImage(sImg, 0, 0, W, H);
           drawCaption(c3, W, H, barH);
           out3.toBlob(function (blob) {
-            downloadBlob(blob, slug(state.name) + '-3d.png');
+            downloadBlob(blob, 'my-design-3d.png');
             toast('3D mockup downloaded.');
           });
         };
@@ -750,23 +573,22 @@
       ? window.Shirt3D.renderFlat(state.product, state.color, state.fabric, isBack, scale).catch(function () { return null; })
       : Promise.resolve(null);
     bgPromise.then(function (bgUrl) {
-    var svgStr = shirtSVG(state.product, LOCATIONS[state.loc].side, state.color);
-    var img = new Image();
-    img.onload = function () {
-      ctx.drawImage(img, 0, 0, out.width, DESIGN_H * scale);
-      var designUrl = canvas.toDataURL({ format: 'png', multiplier: scale / zoom });
-      var dImg = new Image();
-      dImg.onload = function () {
-        ctx.drawImage(dImg, 0, 0, out.width, DESIGN_H * scale);
-        drawCaption(ctx, out.width, DESIGN_H * scale, barH);
-        out.toBlob(function (blob) {
-          downloadBlob(blob, slug(state.name) + '-' + state.loc + '.png');
-          toast('Mockup downloaded with your design specs on it.');
-        });
+      var img = new Image();
+      img.onload = function () {
+        ctx.drawImage(img, 0, 0, out.width, DESIGN_H * scale);
+        var designUrl = canvas.toDataURL({ format: 'png', multiplier: scale / zoom });
+        var dImg = new Image();
+        dImg.onload = function () {
+          ctx.drawImage(dImg, 0, 0, out.width, DESIGN_H * scale);
+          drawCaption(ctx, out.width, DESIGN_H * scale, barH);
+          out.toBlob(function (blob) {
+            downloadBlob(blob, 'my-design-' + state.loc + '.png');
+            toast('Mockup downloaded.');
+          });
+        };
+        dImg.src = designUrl;
       };
-      dImg.src = designUrl;
-    };
-    img.src = bgUrl || ('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr));
+      img.src = bgUrl || ('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(shirtSVG(state.product, LOCATIONS[state.loc].side, state.color)));
     });
   });
 
@@ -776,7 +598,6 @@
     var lines = [
       'Hi Signet, I designed this in your apparel designer and would like a quote.',
       '',
-      'Design: ' + state.name,
       'Garment: ' + PRODUCTS[state.product].name + ' - ' + state.colorName + (state.fabric === 'heather' ? ' (Heather)' : ''),
       'Decoration: ' + (state.deco === 'embroidery' ? 'Embroidery' : 'Screen Print'),
       'Location(s): ' + (locsUsed.length ? locsUsed.join(', ') : 'None yet'),
@@ -787,7 +608,7 @@
       'I am attaching the mockup PNG I downloaded from the designer.'
     ];
     window.location.href = 'mailto:' + QUOTE_EMAIL +
-      '?subject=' + encodeURIComponent('Apparel quote request: ' + state.name) +
+      '?subject=' + encodeURIComponent('Apparel quote request') +
       '&body=' + encodeURIComponent(lines.join('\n'));
   });
 
@@ -800,17 +621,9 @@
     toastTimer = setTimeout(function () { els.toast.classList.add('hidden'); }, 3200);
   }
 
-  // ---------- Init ----------
+  // ---------- Init (fresh every load, nothing persists) ----------
   resize();
-  var saved = null;
-  try { saved = JSON.parse(localStorage.getItem('signet-apparel-designer')); } catch (e) { /* ignore */ }
-  if (saved && saved.v === 2 && saved.designs && (saved.designs.ff || saved.designs.lc || saved.designs.fb)) {
-    restore(saved);
-    toast('Welcome back. Your last design was restored.');
-  } else {
-    renderShirt();
-    refreshPanels();
-  }
+  renderShirt();
   window.addEventListener('resize', resize);
   FONTS.forEach(function (f) { document.fonts.load('40px "' + f + '"'); });
 })();

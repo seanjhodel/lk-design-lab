@@ -11,100 +11,66 @@
 </head>
 <body>
 
-<main class="lab">
-  <nav class="tabs">
-    <button class="tab active" data-tab="products"><span class="tab-ico">👕</span>Products</button>
-    <button class="tab" data-tab="colors"><span class="tab-ico">🎨</span>Colors</button>
-    <button class="tab" data-tab="upload"><span class="tab-ico">📤</span>Upload</button>
-    <button class="tab" data-tab="text"><span class="tab-ico">🔤</span>Text</button>
-  </nav>
+<main class="app">
+  <div class="bar">
+    <button id="uploadBtn" class="big-btn primary">📤 Upload Logo</button>
+    <button id="textBtn" class="big-btn">🔤 Add Text</button>
+    <input type="file" id="uploadInput" accept="image/*" hidden>
+  </div>
 
-  <aside class="panel">
-    <section class="panel-section" data-panel="products">
-      <h2>Choose a garment</h2>
-      <div class="product-grid" id="productGrid"></div>
-    </section>
+  <div class="text-row hidden" id="textRow">
+    <input id="textInput" type="text" placeholder="Type your text..." value="YOUR TEXT">
+    <select id="fontSelect"></select>
+    <div class="swatch-row" id="textColors"></div>
+    <button id="addTextBtn" class="big-btn primary small">Add</button>
+  </div>
 
-    <section class="panel-section hidden" data-panel="colors">
-      <h2>Garment color</h2>
-      <p class="muted" id="colorName">White</p>
-      <div class="swatch-grid" id="colorGrid"></div>
-      <label class="field-label">Fabric</label>
-      <div class="deco-toggle" id="fabricToggle">
-        <button class="deco-btn active" data-fabric="solid">Solid Color</button>
-        <button class="deco-btn" data-fabric="heather">Heather</button>
-      </div>
-    </section>
-
-    <section class="panel-section hidden" data-panel="text">
-      <h2>Add text</h2>
-      <textarea id="textInput" rows="2" placeholder="Type something...">YOUR TEXT</textarea>
-      <label class="field-label">Font</label>
-      <select id="fontSelect"></select>
-      <label class="field-label">Text color</label>
-      <div class="swatch-row" id="textColors"></div>
-      <label class="field-label">Outline</label>
-      <div class="outline-row">
-        <input type="color" id="outlineColor" value="#000000">
-        <input type="range" id="outlineWidth" min="0" max="6" step="0.5" value="0">
-        <span id="outlineVal" class="muted">0</span>
-      </div>
-      <button class="btn btn-primary btn-block" id="addTextBtn">Add Text</button>
-      <p class="muted small">Tip: select text on the garment to edit it here, or double-click it to type directly.</p>
-    </section>
-
-    <section class="panel-section hidden" data-panel="upload">
-      <h2>Upload your logo</h2>
-      <label class="dropzone" for="uploadInput">
-        <div class="dz-ico">📤</div>
-        <div><strong>Click to upload</strong> or drag a file here</div>
-        <div class="muted small">PNG, JPG, SVG, or GIF. PNG with a transparent background works best.</div>
-        <input type="file" id="uploadInput" accept="image/*" hidden>
-      </label>
-      <p class="muted small">Your image never leaves your browser until you request a quote.</p>
-    </section>
-  </aside>
-
-  <section class="stage">
-    <div class="stage-toggles">
-      <div class="side-toggle" id="locToggle">
-        <button class="side-btn active" data-loc="ff">Full Front <span class="dot hidden" id="dot-ff"></span></button>
-        <button class="side-btn" data-loc="lc">Left Chest <span class="dot hidden" id="dot-lc"></span></button>
-        <button class="side-btn" data-loc="fb">Full Back <span class="dot hidden" id="dot-fb"></span></button>
-      </div>
-      <div class="side-toggle view-toggle">
-        <button class="side-btn active" data-view="2d">Edit</button>
-        <button class="side-btn" data-view="3d">3D Preview</button>
-      </div>
-      <div class="side-toggle" id="decoToggle">
-        <button class="side-btn active" data-deco="print">Screen Print</button>
-        <button class="side-btn" data-deco="embroidery">Embroidery</button>
-      </div>
+  <div class="stage-area" id="stageArea">
+    <div class="canvas-wrap" id="stageWrap">
+      <div id="shirtSvg"></div>
+      <canvas id="c"></canvas>
+      <div id="printArea"></div>
     </div>
-    <div class="canvas-outer">
-      <div class="canvas-wrap" id="stageWrap">
-        <div id="shirtSvg"></div>
-        <canvas id="c"></canvas>
-        <div id="printArea"></div>
-      </div>
-      <div id="stage3d" class="hidden">
-        <div id="stage3dLoading" class="stage3d-loading">Loading 3D preview…</div>
-      </div>
+    <div id="stage3d" class="hidden">
+      <div id="stage3dLoading" class="stage3d-loading">Loading 3D…</div>
     </div>
     <div class="obj-toolbar hidden" id="objToolbar">
-      <button data-act="center" title="Center in print area">↔ Center</button>
-      <button data-act="flip" title="Flip horizontally">⇋ Flip</button>
-      <button data-act="dup" title="Duplicate">⧉ Duplicate</button>
-      <button data-act="front" title="Bring forward">▲ Forward</button>
-      <button data-act="back" title="Send backward">▼ Back</button>
-      <button data-act="del" class="danger" title="Delete">✕ Delete</button>
+      <button data-act="center" title="Center">↔</button>
+      <button data-act="flip" title="Flip">⇋</button>
+      <button data-act="dup" title="Duplicate">⧉</button>
+      <button data-act="del" class="danger" title="Delete">✕</button>
     </div>
-    <p class="hint">The dashed box is the print area for this location. Anything outside it won't be decorated.</p>
-    <div class="stage-actions">
-      <button class="btn btn-ghost" id="downloadBtn">Download Mockup</button>
-      <button class="btn btn-primary" id="quoteBtn">Request a Quote</button>
+  </div>
+
+  <div class="bar">
+    <div class="pills" id="locToggle">
+      <button class="pill active" data-loc="ff">Front <span class="dot hidden" id="dot-ff"></span></button>
+      <button class="pill" data-loc="lc">Chest <span class="dot hidden" id="dot-lc"></span></button>
+      <button class="pill" data-loc="fb">Back <span class="dot hidden" id="dot-fb"></span></button>
     </div>
-  </section>
+    <div class="pills view-toggle">
+      <button class="pill active" data-view="2d">Edit</button>
+      <button class="pill" data-view="3d">3D</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="pills" id="decoToggle">
+      <button class="pill active" data-deco="print">Screen Print</button>
+      <button class="pill" data-deco="embroidery">Embroidery</button>
+    </div>
+    <button id="heatherBtn" class="chip" title="Heather fabric texture">Heather</button>
+  </div>
+
+  <div class="bar picker-bar">
+    <div class="prods" id="productGrid"></div>
+    <div class="colors" id="colorGrid"></div>
+  </div>
+
+  <div class="bar">
+    <button id="downloadBtn" class="big-btn">Download Mockup</button>
+    <button id="quoteBtn" class="big-btn primary">Get a Quote</button>
+  </div>
 </main>
 
 <div class="toast hidden" id="toast"></div>
