@@ -178,6 +178,7 @@ body {
 .obj-toolbar button:hover { background: rgba(255,255,255,.12); }
 .obj-toolbar button.danger { color: #fca5a5; }
 .hint { font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+.stage-actions { display: flex; gap: 10px; margin-top: 12px; }
 
 /* Pricing */
 .pricing { padding: 18px 16px; overflow-y: auto; }

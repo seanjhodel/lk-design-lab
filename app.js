@@ -21,15 +21,6 @@
   var FONTS = ['Anton', 'Archivo Black', 'Bebas Neue', 'Oswald', 'Montserrat', 'Alfa Slab One', 'Pacifico', 'Lobster', 'Permanent Marker', 'Courier Prime'];
   var TEXT_COLORS = ['#ffffff', '#111111', '#005CB9', '#40B4E5', '#c8102e', '#f2a900', '#007a33', '#e86c29', '#4b3b8f', '#9ea2a2'];
 
-  var CLIPART = [
-    { name: 'Star',   path: 'M50 5 L61 38 L96 38 L68 59 L79 92 L50 71 L21 92 L32 59 L4 38 L39 38 Z' },
-    { name: 'Heart',  path: 'M50 88 C20 64 5 45 5 28 C5 12 18 4 30 4 C40 4 47 10 50 16 C53 10 60 4 70 4 C82 4 95 12 95 28 C95 45 80 64 50 88 Z' },
-    { name: 'Bolt',   path: 'M56 2 L20 55 L44 55 L36 98 L80 40 L54 40 Z' },
-    { name: 'Shield', path: 'M50 3 L90 16 L90 48 C90 72 74 89 50 97 C26 89 10 72 10 48 L10 16 Z' },
-    { name: 'Circle', path: 'M50 4 A46 46 0 1 0 50 96 A46 46 0 1 0 50 4 Z M50 18 A32 32 0 1 1 50 82 A32 32 0 1 1 50 18 Z' },
-    { name: 'Banner', path: 'M4 30 L96 30 L96 70 L50 58 L4 70 Z' }
-  ];
-
   var DESIGN_W = 520, DESIGN_H = 620;
   var QUOTE_EMAIL = 'david.kent@signetmktg.com';
 
@@ -151,11 +142,11 @@
   // ---------- DOM ----------
   function $(id) { return document.getElementById(id); }
   var els = {
-    designName: $('designName'), saveBtn: $('saveBtn'), loadInput: $('loadInput'), downloadBtn: $('downloadBtn'),
+    downloadBtn: $('downloadBtn'),
     productGrid: $('productGrid'), colorGrid: $('colorGrid'), colorName: $('colorName'),
     textInput: $('textInput'), fontSelect: $('fontSelect'), textColors: $('textColors'),
     outlineColor: $('outlineColor'), outlineWidth: $('outlineWidth'), outlineVal: $('outlineVal'), addTextBtn: $('addTextBtn'),
-    clipartGrid: $('clipartGrid'), shapeColors: $('shapeColors'), uploadInput: $('uploadInput'),
+    uploadInput: $('uploadInput'),
     stageWrap: $('stageWrap'), shirtSvg: $('shirtSvg'), printArea: $('printArea'),
     stage3d: $('stage3d'), stage3dLoading: $('stage3dLoading'),
     objToolbar: $('objToolbar'),
@@ -456,7 +447,6 @@
     state.deco = snap.deco === 'embroidery' ? 'embroidery' : 'print';
     state.fabric = snap.fabric === 'heather' ? 'heather' : 'solid';
     state.designs = snap.designs || { ff: null, lc: null, fb: null };
-    els.designName.value = state.name;
     markSelected(els.productGrid, '[data-product="' + state.product + '"]');
     markSelected(els.colorGrid, '[data-hex="' + state.color + '"]');
     els.colorName.textContent = state.colorName;
@@ -590,28 +580,6 @@
     var obj = activeObj();
     if (obj && obj.type === 'i-text') { obj.set('fill', hex); canvas.requestRenderAll(); onCanvasChange(); }
   });
-  buildSwatchRow(els.shapeColors, function (hex) {
-    var obj = activeObj();
-    if (obj && obj.type === 'path') { obj.set('fill', hex); canvas.requestRenderAll(); onCanvasChange(); }
-  });
-
-  // ---------- Clipart ----------
-  CLIPART.forEach(function (c) {
-    var b = document.createElement('button');
-    b.title = c.name;
-    b.innerHTML = '<svg viewBox="0 0 100 100"><path d="' + c.path + '" fill="#334155" fill-rule="evenodd"/></svg>';
-    b.addEventListener('click', function () {
-      var a = currentArea();
-      var p = new fabric.Path(c.path, {
-        fill: '#111111', fillRule: 'evenodd',
-        originX: 'center', originY: 'center',
-        left: a.x + a.w / 2, top: a.y + a.h / 2
-      });
-      p.scaleToWidth(a.w * 0.5);
-      canvas.add(p); canvas.setActiveObject(p); canvas.requestRenderAll();
-    });
-    els.clipartGrid.appendChild(b);
-  });
 
   // ---------- Upload ----------
   function placeImage(dataUrl) {
@@ -711,9 +679,7 @@
     b.addEventListener('click', function () { switchLoc(b.dataset.loc); });
   });
 
-  // ---------- Save / load / export ----------
-  els.designName.addEventListener('input', function () { state.name = els.designName.value || 'Untitled design'; autosave(); });
-
+  // ---------- Export ----------
   function downloadBlob(blob, filename) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -721,23 +687,6 @@
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
   }
-
-  els.saveBtn.addEventListener('click', function () {
-    downloadBlob(new Blob([JSON.stringify(snapshot())], { type: 'application/json' }), slug(state.name) + '.json');
-    toast('Design saved. Use Load to bring it back anytime.');
-  });
-
-  els.loadInput.addEventListener('change', function () {
-    var f = els.loadInput.files[0];
-    if (!f) return;
-    var rd = new FileReader();
-    rd.onload = function () {
-      try { restore(JSON.parse(rd.result)); toast('Design loaded.'); }
-      catch (e) { toast('That file could not be read.'); }
-    };
-    rd.readAsText(f);
-    els.loadInput.value = '';
-  });
 
   function slug(s) { return (s || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'design'; }
 

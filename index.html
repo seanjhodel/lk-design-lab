@@ -11,24 +11,12 @@
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">SIGNET <span class="brand-sub">Apparel Designer</span></div>
-  <input id="designName" class="design-name" value="Untitled design" spellcheck="false">
-  <div class="top-actions">
-    <button class="btn btn-ghost" id="saveBtn" title="Download your design as a file you can reload later">Save</button>
-    <label class="btn btn-ghost" for="loadInput" title="Load a saved design file">Load<input type="file" id="loadInput" accept=".json" hidden></label>
-    <button class="btn btn-ghost" id="downloadBtn">Download Mockup</button>
-    <button class="btn btn-primary" id="quoteBtn">Request a Quote</button>
-  </div>
-</header>
-
 <main class="lab">
   <nav class="tabs">
     <button class="tab active" data-tab="products"><span class="tab-ico">👕</span>Products</button>
     <button class="tab" data-tab="colors"><span class="tab-ico">🎨</span>Colors</button>
     <button class="tab" data-tab="upload"><span class="tab-ico">📤</span>Upload</button>
     <button class="tab" data-tab="text"><span class="tab-ico">🔤</span>Text</button>
-    <button class="tab" data-tab="art"><span class="tab-ico">⭐</span>Art</button>
   </nav>
 
   <aside class="panel">
@@ -63,14 +51,6 @@
       </div>
       <button class="btn btn-primary btn-block" id="addTextBtn">Add Text</button>
       <p class="muted small">Tip: select text on the garment to edit it here, or double-click it to type directly.</p>
-    </section>
-
-    <section class="panel-section hidden" data-panel="art">
-      <h2>Clipart</h2>
-      <p class="muted small">Click to add, then drag, resize, and recolor.</p>
-      <div class="clipart-grid" id="clipartGrid"></div>
-      <label class="field-label">Shape color</label>
-      <div class="swatch-row" id="shapeColors"></div>
     </section>
 
     <section class="panel-section hidden" data-panel="upload">
@@ -120,6 +100,10 @@
       <button data-act="del" class="danger" title="Delete">✕ Delete</button>
     </div>
     <p class="hint">The dashed box is the print area for this location. Anything outside it won't be decorated.</p>
+    <div class="stage-actions">
+      <button class="btn btn-ghost" id="downloadBtn">Download Mockup</button>
+      <button class="btn btn-primary" id="quoteBtn">Request a Quote</button>
+    </div>
   </section>
 </main>
 
