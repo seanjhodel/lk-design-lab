@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signet Apparel Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Anton&family=Archivo+Black&family=Bebas+Neue&family=Oswald:wght@500&family=Pacifico&family=Lobster&family=Permanent+Marker&family=Alfa+Slab+One&family=Montserrat:wght@600;700&family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Welcome overlay -->
+<div id="welcome" class="welcome">
+  <div class="welcome-card">
+    <div class="welcome-logo">SIGNET<span> MARKETING</span></div>
+    <h1>See your logo on real apparel.</h1>
+    <p>Upload your artwork, place it on a garment, and our built-in embroidery and print check will flag anything that won't stitch or print well. When you're happy, send it to us for a quote.</p>
+    <div class="welcome-products" id="welcomeProducts"></div>
+    <div class="welcome-actions">
+      <button class="btn btn-primary" id="startBtn">Start Designing</button>
+      <button class="btn btn-ghost hidden" id="resumeBtn">Resume my last design</button>
+    </div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand">SIGNET <span class="brand-sub">Apparel Designer</span></div>
+  <input id="designName" class="design-name" value="Untitled design" spellcheck="false">
+  <div class="top-actions">
+    <button class="btn btn-ghost" id="saveBtn" title="Download your design as a file you can reload later">Save</button>
+    <label class="btn btn-ghost" for="loadInput" title="Load a saved design file">Load<input type="file" id="loadInput" accept=".json" hidden></label>
+    <button class="btn btn-primary" id="downloadBtn">Download Mockup</button>
+  </div>
+</header>
+
+<main class="lab">
+  <nav class="tabs">
+    <button class="tab" data-tab="upload"><span class="tab-ico">📤</span>Upload</button>
+    <button class="tab" data-tab="text"><span class="tab-ico">🔤</span>Text</button>
+    <button class="tab" data-tab="art"><span class="tab-ico">⭐</span>Art</button>
+    <button class="tab active" data-tab="products"><span class="tab-ico">👕</span>Products</button>
+    <button class="tab" data-tab="colors"><span class="tab-ico">🎨</span>Colors</button>
+  </nav>
+
+  <aside class="panel">
+    <section class="panel-section" data-panel="products">
+      <h2>Choose a garment</h2>
+      <div class="product-grid" id="productGrid"></div>
+    </section>
+
+    <section class="panel-section hidden" data-panel="colors">
+      <h2>Garment color</h2>
+      <p class="muted" id="colorName">White</p>
+      <div class="swatch-grid" id="colorGrid"></div>
+      <label class="field-label">Fabric</label>
+      <div class="deco-toggle" id="fabricToggle">
+        <button class="deco-btn active" data-fabric="solid">Solid Color</button>
+        <button class="deco-btn" data-fabric="heather">Heather</button>
+      </div>
+    </section>
+
+    <section class="panel-section hidden" data-panel="text">
+      <h2>Add text</h2>
+      <textarea id="textInput" rows="2" placeholder="Type something...">YOUR TEXT</textarea>
+      <label class="field-label">Font</label>
+      <select id="fontSelect"></select>
+      <label class="field-label">Text color</label>
+      <div class="swatch-row" id="textColors"></div>
+      <label class="field-label">Outline</label>
+      <div class="outline-row">
+        <input type="color" id="outlineColor" value="#000000">
+        <input type="range" id="outlineWidth" min="0" max="6" step="0.5" value="0">
+        <span id="outlineVal" class="muted">0</span>
+      </div>
+      <button class="btn btn-primary btn-block" id="addTextBtn">Add Text</button>
+      <p class="muted small">Tip: select text on the garment to edit it here, or double-click it to type directly.</p>
+    </section>
+
+    <section class="panel-section hidden" data-panel="art">
+      <h2>Clipart</h2>
+      <p class="muted small">Click to add, then drag, resize, and recolor.</p>
+      <div class="clipart-grid" id="clipartGrid"></div>
+      <label class="field-label">Shape color</label>
+      <div class="swatch-row" id="shapeColors"></div>
+    </section>
+
+    <section class="panel-section hidden" data-panel="upload">
+      <h2>Upload your logo</h2>
+      <label class="dropzone" for="uploadInput">
+        <div class="dz-ico">📤</div>
+        <div><strong>Click to upload</strong> or drag a file here</div>
+        <div class="muted small">PNG, JPG, SVG, or GIF. PNG with a transparent background works best.</div>
+        <input type="file" id="uploadInput" accept="image/*" hidden>
+      </label>
+      <p class="muted small">We check your art for embroidery and print issues automatically. Your image never leaves your browser until you request a quote.</p>
+    </section>
+  </aside>
+
+  <section class="stage">
+    <div class="stage-toggles">
+      <div class="side-toggle" id="locToggle">
+        <button class="side-btn active" data-loc="ff">Full Front <span class="dot hidden" id="dot-ff"></span></button>
+        <button class="side-btn" data-loc="lc">Left Chest <span class="dot hidden" id="dot-lc"></span></button>
+        <button class="side-btn" data-loc="fb">Full Back <span class="dot hidden" id="dot-fb"></span></button>
+      </div>
+      <div class="side-toggle view-toggle">
+        <button class="side-btn active" data-view="2d">Edit</button>
+        <button class="side-btn" data-view="3d">3D Preview</button>
+      </div>
+    </div>
+    <div class="canvas-outer">
+      <div class="canvas-wrap" id="stageWrap">
+        <div id="shirtSvg"></div>
+        <canvas id="c"></canvas>
+        <div id="printArea"></div>
+      </div>
+      <div id="stage3d" class="hidden">
+        <div id="stage3dLoading" class="stage3d-loading">Loading 3D preview…</div>
+      </div>
+    </div>
+    <div class="obj-toolbar hidden" id="objToolbar">
+      <button data-act="center" title="Center in print area">↔ Center</button>
+      <button data-act="flip" title="Flip horizontally">⇋ Flip</button>
+      <button data-act="dup" title="Duplicate">⧉ Duplicate</button>
+      <button data-act="front" title="Bring forward">▲ Forward</button>
+      <button data-act="back" title="Send backward">▼ Back</button>
+      <button data-act="del" class="danger" title="Delete">✕ Delete</button>
+    </div>
+    <p class="hint">The dashed box is the print area for this location. Anything outside it won't be decorated.</p>
+  </section>
+
+  <aside class="pricing">
+    <div class="pricing-card">
+      <div class="pc-head">
+        <div class="pc-product" id="pcProduct">T-Shirt</div>
+        <div class="muted" id="pcMeta">White · Full Front</div>
+      </div>
+
+      <h3>Decoration</h3>
+      <div class="deco-toggle" id="decoToggle">
+        <button class="deco-btn active" data-deco="print">Screen Print</button>
+        <button class="deco-btn" data-deco="embroidery">Embroidery</button>
+      </div>
+
+      <h3>Your design</h3>
+      <ul class="summary-list" id="summaryList">
+        <li class="muted">Add artwork or text to see your design summary.</li>
+      </ul>
+
+      <h3>Embroidery &amp; print check</h3>
+      <ul class="check-list" id="checkList">
+        <li class="ok">Nothing to check yet.</li>
+      </ul>
+
+      <h3>Quantity by size</h3>
+      <div class="size-grid" id="sizeGrid"></div>
+      <div class="price-summary">
+        <div class="row total"><span>Total pieces</span><strong id="sumQty">0</strong></div>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="quoteBtn">Request a Quote</button>
+      <p class="muted small center">No payment needed. Signet will follow up with exact pricing and a stitch-out or print proof.</p>
+    </div>
+  </aside>
+</main>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="threed.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
