@@ -263,6 +263,28 @@ function renderFlat(product, hex, fabric, isBack, mult) {
   });
 }
 
+// Embroidery look: overlay fine diagonal light/dark thread ridges, clipped to
+// the artwork's opaque pixels, so the decal reads as satin stitching.
+function stitchify(image) {
+  var w = image.width, h = image.height;
+  var cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  var g = cv.getContext('2d');
+  g.drawImage(image, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  var step = Math.max(3, Math.round(w / 140));
+  g.lineWidth = Math.max(1, step * 0.38);
+  g.strokeStyle = 'rgba(0,0,0,0.20)';
+  g.beginPath();
+  for (var x = -h; x < w; x += step) { g.moveTo(x, 0); g.lineTo(x + h, h); }
+  g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,0.24)';
+  g.beginPath();
+  for (var x2 = -h + step / 2; x2 < w; x2 += step) { g.moveTo(x2, 0); g.lineTo(x2 + h, h); }
+  g.stroke();
+  return cv;
+}
+
 function clearDecals() {
   decals.forEach(function (d) {
     scene.remove(d);
@@ -284,7 +306,8 @@ function setDecals(items) {
       var image = new Image();
       image.onload = function () {
         if (current !== entry) { resolve(); return; }
-        var tex = new THREE.Texture(image);
+        var source = it.stitch ? stitchify(image) : image;
+        var tex = new THREE.Texture(source);
         tex.colorSpace = THREE.SRGBColorSpace;
         if (renderer) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
         tex.needsUpdate = true;
@@ -298,7 +321,7 @@ function setDecals(items) {
         var size = new THREE.Vector3(w, h, entry.size.z * 0.6);
         var geo = new DecalGeometry(entry.mesh, pos, rot, size);
         var mat = new THREE.MeshStandardMaterial({
-          map: tex, transparent: true, roughness: 0.85, metalness: 0,
+          map: tex, transparent: true, roughness: it.stitch ? 1.0 : 0.85, metalness: 0,
           depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4
         });
         var mesh = new THREE.Mesh(geo, mat);

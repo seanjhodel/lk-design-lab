@@ -251,7 +251,7 @@
         var a = areaFor(loc, state.product);
         var url = sc.toDataURL({ format: 'png', left: a.x, top: a.y, width: a.w, height: a.h, multiplier: 3 });
         sc.dispose();
-        resolve({ img: url, area: a, back: loc === 'fb' });
+        resolve({ img: url, area: a, back: loc === 'fb', stitch: state.deco === 'embroidery' });
       });
     });
   }
@@ -758,6 +758,7 @@
       state.deco = b.dataset.deco;
       document.querySelectorAll('#decoToggle .deco-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
       refreshPanels(); autosave();
+      if (view === '3d') update3D();
     });
   });
 
