@@ -839,7 +839,7 @@
     ctx.font = '800 30px "Open Sans", sans-serif';
     ctx.fillText('SIGNET', 28, y0 + 40);
     ctx.font = '600 22px "Open Sans", sans-serif';
-    var parts = [PRODUCTS[state.product].name, state.colorName, loc.label];
+    var parts = [PRODUCTS[state.product].name, state.colorName + (state.fabric === 'heather' ? ' Heather' : ''), loc.label];
     if (facts.objects) {
       parts.push(facts.widthIn.toFixed(1) + '" x ' + facts.heightIn.toFixed(1) + '"');
       parts.push(Math.max(1, facts.colors) + ' color' + (facts.colors > 1 ? 's' : ''));
