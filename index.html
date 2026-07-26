@@ -11,37 +11,24 @@
 </head>
 <body>
 
-<!-- Welcome overlay -->
-<div id="welcome" class="welcome">
-  <div class="welcome-card">
-    <div class="welcome-logo">SIGNET<span> MARKETING</span></div>
-    <h1>See your logo on real apparel.</h1>
-    <p>Upload your artwork, place it on a garment, and our built-in embroidery and print check will flag anything that won't stitch or print well. When you're happy, send it to us for a quote.</p>
-    <div class="welcome-products" id="welcomeProducts"></div>
-    <div class="welcome-actions">
-      <button class="btn btn-primary" id="startBtn">Start Designing</button>
-      <button class="btn btn-ghost hidden" id="resumeBtn">Resume my last design</button>
-    </div>
-  </div>
-</div>
-
 <header class="topbar">
   <div class="brand">SIGNET <span class="brand-sub">Apparel Designer</span></div>
   <input id="designName" class="design-name" value="Untitled design" spellcheck="false">
   <div class="top-actions">
     <button class="btn btn-ghost" id="saveBtn" title="Download your design as a file you can reload later">Save</button>
     <label class="btn btn-ghost" for="loadInput" title="Load a saved design file">Load<input type="file" id="loadInput" accept=".json" hidden></label>
-    <button class="btn btn-primary" id="downloadBtn">Download Mockup</button>
+    <button class="btn btn-ghost" id="downloadBtn">Download Mockup</button>
+    <button class="btn btn-primary" id="quoteBtn">Request a Quote</button>
   </div>
 </header>
 
 <main class="lab">
   <nav class="tabs">
+    <button class="tab active" data-tab="products"><span class="tab-ico">👕</span>Products</button>
+    <button class="tab" data-tab="colors"><span class="tab-ico">🎨</span>Colors</button>
     <button class="tab" data-tab="upload"><span class="tab-ico">📤</span>Upload</button>
     <button class="tab" data-tab="text"><span class="tab-ico">🔤</span>Text</button>
     <button class="tab" data-tab="art"><span class="tab-ico">⭐</span>Art</button>
-    <button class="tab active" data-tab="products"><span class="tab-ico">👕</span>Products</button>
-    <button class="tab" data-tab="colors"><span class="tab-ico">🎨</span>Colors</button>
   </nav>
 
   <aside class="panel">
@@ -94,7 +81,7 @@
         <div class="muted small">PNG, JPG, SVG, or GIF. PNG with a transparent background works best.</div>
         <input type="file" id="uploadInput" accept="image/*" hidden>
       </label>
-      <p class="muted small">We check your art for embroidery and print issues automatically. Your image never leaves your browser until you request a quote.</p>
+      <p class="muted small">Your image never leaves your browser until you request a quote.</p>
     </section>
   </aside>
 
@@ -108,6 +95,10 @@
       <div class="side-toggle view-toggle">
         <button class="side-btn active" data-view="2d">Edit</button>
         <button class="side-btn" data-view="3d">3D Preview</button>
+      </div>
+      <div class="side-toggle" id="decoToggle">
+        <button class="side-btn active" data-deco="print">Screen Print</button>
+        <button class="side-btn" data-deco="embroidery">Embroidery</button>
       </div>
     </div>
     <div class="canvas-outer">
@@ -130,40 +121,6 @@
     </div>
     <p class="hint">The dashed box is the print area for this location. Anything outside it won't be decorated.</p>
   </section>
-
-  <aside class="pricing">
-    <div class="pricing-card">
-      <div class="pc-head">
-        <div class="pc-product" id="pcProduct">T-Shirt</div>
-        <div class="muted" id="pcMeta">White · Full Front</div>
-      </div>
-
-      <h3>Decoration</h3>
-      <div class="deco-toggle" id="decoToggle">
-        <button class="deco-btn active" data-deco="print">Screen Print</button>
-        <button class="deco-btn" data-deco="embroidery">Embroidery</button>
-      </div>
-
-      <h3>Your design</h3>
-      <ul class="summary-list" id="summaryList">
-        <li class="muted">Add artwork or text to see your design summary.</li>
-      </ul>
-
-      <h3>Embroidery &amp; print check</h3>
-      <ul class="check-list" id="checkList">
-        <li class="ok">Nothing to check yet.</li>
-      </ul>
-
-      <h3>Quantity by size</h3>
-      <div class="size-grid" id="sizeGrid"></div>
-      <div class="price-summary">
-        <div class="row total"><span>Total pieces</span><strong id="sumQty">0</strong></div>
-      </div>
-
-      <button class="btn btn-primary btn-block" id="quoteBtn">Request a Quote</button>
-      <p class="muted small center">No payment needed. Signet will follow up with exact pricing and a stitch-out or print proof.</p>
-    </div>
-  </aside>
 </main>
 
 <div class="toast hidden" id="toast"></div>

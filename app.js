@@ -30,7 +30,6 @@
     { name: 'Banner', path: 'M4 30 L96 30 L96 70 L50 58 L4 70 Z' }
   ];
 
-  var SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
   var DESIGN_W = 520, DESIGN_H = 620;
   var QUOTE_EMAIL = 'david.kent@signetmktg.com';
 
@@ -63,7 +62,6 @@
     loc: 'ff',
     deco: 'print',
     designs: { ff: null, lc: null, fb: null },
-    sizes: { S: 0, M: 0, L: 0, XL: 0, '2XL': 0, '3XL': 0 },
     name: 'Untitled design'
   };
 
@@ -153,7 +151,6 @@
   // ---------- DOM ----------
   function $(id) { return document.getElementById(id); }
   var els = {
-    welcome: $('welcome'), welcomeProducts: $('welcomeProducts'), startBtn: $('startBtn'), resumeBtn: $('resumeBtn'),
     designName: $('designName'), saveBtn: $('saveBtn'), loadInput: $('loadInput'), downloadBtn: $('downloadBtn'),
     productGrid: $('productGrid'), colorGrid: $('colorGrid'), colorName: $('colorName'),
     textInput: $('textInput'), fontSelect: $('fontSelect'), textColors: $('textColors'),
@@ -162,8 +159,6 @@
     stageWrap: $('stageWrap'), shirtSvg: $('shirtSvg'), printArea: $('printArea'),
     stage3d: $('stage3d'), stage3dLoading: $('stage3dLoading'),
     objToolbar: $('objToolbar'),
-    pcProduct: $('pcProduct'), pcMeta: $('pcMeta'), sizeGrid: $('sizeGrid'), sumQty: $('sumQty'),
-    summaryList: $('summaryList'), checkList: $('checkList'),
     quoteBtn: $('quoteBtn'), toast: $('toast')
   };
 
@@ -435,61 +430,6 @@
 
   function refreshPanels() {
     updateDots();
-    var loc = LOCATIONS[state.loc];
-    var facts = collectDesignFacts();
-    var locsUsed = Object.keys(LOCATIONS).filter(locHasArt).map(function (k) { return LOCATIONS[k].label; });
-
-    els.pcProduct.textContent = PRODUCTS[state.product].name;
-    els.pcMeta.textContent = state.colorName + ' · ' + loc.label;
-
-    // summary
-    var rows = [
-      ['Garment', PRODUCTS[state.product].name],
-      ['Color', state.colorName + (state.fabric === 'heather' ? ' Heather' : '')],
-      ['Decoration', state.deco === 'embroidery' ? 'Embroidery' : 'Screen Print'],
-      ['Location' + (locsUsed.length > 1 ? 's' : ''), locsUsed.length ? locsUsed.join(', ') : loc.label]
-    ];
-    if (facts.objects) {
-      rows.push(['Design size', facts.widthIn.toFixed(1) + '" × ' + facts.heightIn.toFixed(1) + '"']);
-      rows.push(['Colors detected', String(Math.max(1, facts.colors))]);
-      if (state.deco === 'embroidery') {
-        var stitches = Math.round(facts.sqIn * 2000);
-        rows.push(['Est. stitches', '~' + stitches.toLocaleString()]);
-      }
-    }
-    els.summaryList.innerHTML = rows.map(function (rw) {
-      return '<li><span>' + rw[0] + '</span><span>' + rw[1] + '</span></li>';
-    }).join('');
-
-    // checks
-    var checks = [];
-    if (!facts.objects) {
-      checks.push(['ok', 'Nothing to check yet. Upload a logo or add text.']);
-    } else {
-      if (state.deco === 'embroidery') {
-        if (facts.colors > 15) checks.push(['bad', 'More than 15 colors detected. Embroidery tops out at 15 thread colors.']);
-        if (facts.hasGradient) checks.push(['bad', 'Gradients or fades detected. Embroidery needs solid colors; we can simplify the art for you.']);
-        if (facts.hasSemiTransparency) checks.push(['warn', 'Semi-transparent areas detected. Transparency and shadows do not embroider.']);
-        if (state.loc === 'lc' && facts.widthIn > 3.5) checks.push(['warn', 'Wider than the standard 3.5" left chest size.']);
-        if (facts.minTextIn !== null && facts.minTextIn < 0.2) checks.push(['warn', 'Text may be too small to embroider. Keep letters at least 0.20"-0.25" tall.']);
-        var est = Math.round(facts.sqIn * 2000);
-        if (est > loc.maxStitches) checks.push(['warn', 'Estimated ~' + est.toLocaleString() + ' stitches, above the typical max for ' + loc.label + ' (' + loc.maxStitches.toLocaleString() + '). Expect higher cost or a size reduction.']);
-        if (!checks.length) checks.push(['ok', 'Looks good for embroidery. Final check happens when we digitize your file.']);
-      } else {
-        if (facts.colors > 8) checks.push(['warn', String(facts.colors) + ' colors detected. More ink colors raises screen print cost; full-color DTF is an option.']);
-        if (facts.hasSemiTransparency) checks.push(['warn', 'Semi-transparent areas may print differently than they look on screen.']);
-        if (facts.widthIn > loc.normW) checks.push(['warn', 'Design is wider than the usual ' + loc.normW + '" max for ' + loc.label + '.']);
-        if (!checks.length) checks.push(['ok', 'Looks good to print. We confirm sizing on your proof.']);
-      }
-    }
-    els.checkList.innerHTML = checks.map(function (c) {
-      return '<li class="' + c[0] + '">' + c[1] + '</li>';
-    }).join('');
-
-    // quantity
-    var qty = 0;
-    Object.keys(state.sizes).forEach(function (k) { qty += state.sizes[k]; });
-    els.sumQty.textContent = qty;
   }
 
   // ---------- Autosave ----------
@@ -505,7 +445,7 @@
 
   function snapshot() {
     serializeLoc();
-    return { v: 2, name: state.name, product: state.product, color: state.color, colorName: state.colorName, fabric: state.fabric, deco: state.deco, sizes: state.sizes, designs: state.designs };
+    return { v: 2, name: state.name, product: state.product, color: state.color, colorName: state.colorName, fabric: state.fabric, deco: state.deco, designs: state.designs };
   }
 
   function restore(snap) {
@@ -515,21 +455,16 @@
     state.colorName = snap.colorName || 'White';
     state.deco = snap.deco === 'embroidery' ? 'embroidery' : 'print';
     state.fabric = snap.fabric === 'heather' ? 'heather' : 'solid';
-    state.sizes = snap.sizes || state.sizes;
     state.designs = snap.designs || { ff: null, lc: null, fb: null };
     els.designName.value = state.name;
     markSelected(els.productGrid, '[data-product="' + state.product + '"]');
     markSelected(els.colorGrid, '[data-hex="' + state.color + '"]');
     els.colorName.textContent = state.colorName;
-    document.querySelectorAll('#decoToggle .deco-btn').forEach(function (b) {
+    document.querySelectorAll('#decoToggle .side-btn').forEach(function (b) {
       b.classList.toggle('active', b.dataset.deco === state.deco);
     });
     document.querySelectorAll('#fabricToggle .deco-btn').forEach(function (b) {
       b.classList.toggle('active', b.dataset.fabric === state.fabric);
-    });
-    Object.keys(state.sizes).forEach(function (k) {
-      var input = document.querySelector('.size-cell input[data-size="' + k + '"]');
-      if (input) input.value = state.sizes[k] || '';
     });
     document.querySelectorAll('#locToggle .side-btn').forEach(function (b) {
       b.classList.toggle('active', b.dataset.loc === 'ff');
@@ -716,17 +651,6 @@
     b.innerHTML = '<span class="p-ico">' + p.ico + '</span><span><span class="p-name">' + p.name + '</span><br><span class="p-price">Screen print or embroidery</span></span>';
     b.addEventListener('click', function () { setProduct(key); });
     els.productGrid.appendChild(b);
-
-    var w = document.createElement('button');
-    w.className = 'wp' + (i === 0 ? ' selected' : '');
-    w.dataset.product = key;
-    w.innerHTML = '<span class="wp-ico">' + p.ico + '</span>' + p.name;
-    w.addEventListener('click', function () {
-      els.welcomeProducts.querySelectorAll('.wp').forEach(function (x) { x.classList.remove('selected'); });
-      w.classList.add('selected');
-      setProduct(key);
-    });
-    els.welcomeProducts.appendChild(w);
   });
 
   function setProduct(key) {
@@ -753,11 +677,11 @@
   });
 
   // ---------- Decoration toggle ----------
-  document.querySelectorAll('#decoToggle .deco-btn').forEach(function (b) {
+  document.querySelectorAll('#decoToggle .side-btn').forEach(function (b) {
     b.addEventListener('click', function () {
       state.deco = b.dataset.deco;
-      document.querySelectorAll('#decoToggle .deco-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
-      refreshPanels(); autosave();
+      document.querySelectorAll('#decoToggle .side-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
+      autosave();
       if (view === '3d') update3D();
     });
   });
@@ -770,19 +694,6 @@
       if (window.Shirt3D && window.Shirt3D.isInit()) window.Shirt3D.setFabric(state.fabric);
       renderShirt(); refreshPanels(); autosave();
     });
-  });
-
-  // ---------- Sizes ----------
-  SIZES.forEach(function (sz) {
-    var cell = document.createElement('div');
-    cell.className = 'size-cell';
-    cell.innerHTML = '<label>' + sz + '</label><input type="number" min="0" max="9999" inputmode="numeric" data-size="' + sz + '" placeholder="0">';
-    var input = cell.querySelector('input');
-    input.addEventListener('input', function () {
-      state.sizes[sz] = Math.max(0, parseInt(input.value, 10) || 0);
-      refreshPanels(); autosave();
-    });
-    els.sizeGrid.appendChild(cell);
   });
 
   // ---------- Tabs ----------
@@ -911,8 +822,6 @@
   });
 
   els.quoteBtn.addEventListener('click', function () {
-    var qty = 0;
-    Object.keys(state.sizes).forEach(function (k) { qty += state.sizes[k]; });
     var facts = collectDesignFacts();
     var locsUsed = Object.keys(LOCATIONS).filter(locHasArt).map(function (k) { return LOCATIONS[k].label; });
     var lines = [
@@ -924,7 +833,7 @@
       'Location(s): ' + (locsUsed.length ? locsUsed.join(', ') : 'None yet'),
       'Design size: ' + (facts.objects ? facts.widthIn.toFixed(1) + '" x ' + facts.heightIn.toFixed(1) + '"' : 'n/a'),
       'Colors: ' + (facts.objects ? Math.max(1, facts.colors) : 'n/a'),
-      'Quantity: ' + qty + (qty ? ' (' + SIZES.filter(function (k) { return state.sizes[k]; }).map(function (k) { return k + ':' + state.sizes[k]; }).join(', ') + ')' : ''),
+      'Quantity and sizes: (fill in)',
       '',
       'I am attaching the mockup PNG I downloaded from the designer.'
     ];
@@ -942,22 +851,17 @@
     toastTimer = setTimeout(function () { els.toast.classList.add('hidden'); }, 3200);
   }
 
-  // ---------- Welcome ----------
+  // ---------- Init ----------
+  resize();
   var saved = null;
   try { saved = JSON.parse(localStorage.getItem('signet-apparel-designer')); } catch (e) { /* ignore */ }
-  if (saved && saved.v === 2) els.resumeBtn.classList.remove('hidden');
-
-  els.startBtn.addEventListener('click', function () { els.welcome.remove(); });
-  els.resumeBtn.addEventListener('click', function () {
+  if (saved && saved.v === 2 && saved.designs && (saved.designs.ff || saved.designs.lc || saved.designs.fb)) {
     restore(saved);
-    els.welcome.remove();
     toast('Welcome back. Your last design was restored.');
-  });
-
-  // ---------- Init ----------
-  renderShirt();
-  resize();
-  refreshPanels();
+  } else {
+    renderShirt();
+    refreshPanels();
+  }
   window.addEventListener('resize', resize);
   FONTS.forEach(function (f) { document.fonts.load('40px "' + f + '"'); });
 })();

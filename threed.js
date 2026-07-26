@@ -272,13 +272,14 @@ function stitchify(image) {
   var g = cv.getContext('2d');
   g.drawImage(image, 0, 0);
   g.globalCompositeOperation = 'source-atop';
-  var step = Math.max(3, Math.round(w / 140));
-  g.lineWidth = Math.max(1, step * 0.38);
-  g.strokeStyle = 'rgba(0,0,0,0.20)';
+  var step = Math.max(6, Math.round(w / 70));
+  g.lineWidth = Math.max(2, step * 0.45);
+  g.strokeStyle = 'rgba(0,0,0,0.35)';
   g.beginPath();
   for (var x = -h; x < w; x += step) { g.moveTo(x, 0); g.lineTo(x + h, h); }
   g.stroke();
-  g.strokeStyle = 'rgba(255,255,255,0.24)';
+  g.strokeStyle = 'rgba(255,255,255,0.5)';
+  g.lineWidth = Math.max(1, step * 0.28);
   g.beginPath();
   for (var x2 = -h + step / 2; x2 < w; x2 += step) { g.moveTo(x2, 0); g.lineTo(x2 + h, h); }
   g.stroke();

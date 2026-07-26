@@ -79,7 +79,7 @@ body {
 .topbar .btn-ghost:hover { background: rgba(255,255,255,.1); }
 
 /* Layout */
-.lab { flex: 1; display: grid; grid-template-columns: 84px 300px 1fr 320px; min-height: 0; }
+.lab { flex: 1; display: grid; grid-template-columns: 84px 300px 1fr; min-height: 0; }
 
 /* Tabs */
 .tabs { background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; padding-top: 8px; }
@@ -227,7 +227,6 @@ body {
 /* Responsive */
 @media (max-width: 1100px) {
   .lab { grid-template-columns: 72px 260px 1fr; }
-  .pricing { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
   .lab { display: flex; flex-direction: column; }
