@@ -103,7 +103,7 @@
     stageArea: $('stageArea'), stageWrap: $('stageWrap'), shirtSvg: $('shirtSvg'), printArea: $('printArea'),
     stage3d: $('stage3d'), stage3dLoading: $('stage3dLoading'),
     objToolbar: $('objToolbar'),
-    productGrid: $('productGrid'), colorGrid: $('colorGrid'), heatherBtn: $('heatherBtn'),
+    productGrid: $('productGrid'), colorGrid: $('colorGrid'),
     downloadBtn: $('downloadBtn'), quoteBtn: $('quoteBtn'), toast: $('toast')
   };
 
@@ -491,13 +491,6 @@
     els.colorGrid.appendChild(s);
   });
 
-  els.heatherBtn.addEventListener('click', function () {
-    state.fabric = state.fabric === 'heather' ? 'solid' : 'heather';
-    els.heatherBtn.classList.toggle('active', state.fabric === 'heather');
-    if (window.Shirt3D && window.Shirt3D.isInit()) window.Shirt3D.setFabric(state.fabric);
-    renderShirt();
-  });
-
   // ---------- Decoration toggle ----------
   document.querySelectorAll('#decoToggle .pill').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -525,7 +518,7 @@
     ctx.font = '800 30px "Open Sans", sans-serif';
     ctx.fillText('SIGNET', 28, y0 + 40);
     ctx.font = '600 22px "Open Sans", sans-serif';
-    var parts = [PRODUCTS[state.product].name, state.colorName + (state.fabric === 'heather' ? ' Heather' : ''), loc.label,
+    var parts = [PRODUCTS[state.product].name, state.colorName, loc.label,
       state.deco === 'embroidery' ? 'Embroidery' : 'Screen Print'];
     if (facts.objects) parts.push(facts.widthIn.toFixed(1) + '" x ' + facts.heightIn.toFixed(1) + '"');
     ctx.fillText(parts.join('  ·  '), 28, y0 + 74);
@@ -598,7 +591,7 @@
     var lines = [
       'Hi Signet, I designed this in your apparel designer and would like a quote.',
       '',
-      'Garment: ' + PRODUCTS[state.product].name + ' - ' + state.colorName + (state.fabric === 'heather' ? ' (Heather)' : ''),
+      'Garment: ' + PRODUCTS[state.product].name + ' - ' + state.colorName,
       'Decoration: ' + (state.deco === 'embroidery' ? 'Embroidery' : 'Screen Print'),
       'Location(s): ' + (locsUsed.length ? locsUsed.join(', ') : 'None yet'),
       'Design size: ' + (facts.objects ? facts.widthIn.toFixed(1) + '" x ' + facts.heightIn.toFixed(1) + '"' : 'n/a'),
