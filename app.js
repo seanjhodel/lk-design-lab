@@ -22,7 +22,7 @@
   var TEXT_COLORS = ['#ffffff', '#111111', '#005CB9', '#40B4E5', '#c8102e', '#f2a900', '#007a33', '#4b3b8f'];
 
   var DESIGN_W = 520, DESIGN_H = 620;
-  var QUOTE_EMAIL = 'david.kent@signetmktg.com';
+  var CONTACT_URL = 'https://signetmktg.com/contact-us/';
 
   var LOCATIONS = {
     ff: { label: 'Full Front', side: 'front', ppi: 13.33 },
@@ -585,24 +585,11 @@
     });
   });
 
+  // Sends the visitor to Signet's Contact Us page. The widget lives in an
+  // iframe, so navigate the top-level page; if that's blocked, open a new tab.
   els.quoteBtn.addEventListener('click', function () {
-    var facts = collectDesignFacts();
-    var locsUsed = Object.keys(LOCATIONS).filter(locHasArt).map(function (k) { return LOCATIONS[k].label; });
-    var lines = [
-      'Hi Signet, I designed this in your apparel designer and would like a quote.',
-      '',
-      'Garment: ' + PRODUCTS[state.product].name + ' - ' + state.colorName,
-      'Decoration: ' + (state.deco === 'embroidery' ? 'Embroidery' : 'Screen Print'),
-      'Location(s): ' + (locsUsed.length ? locsUsed.join(', ') : 'None yet'),
-      'Design size: ' + (facts.objects ? facts.widthIn.toFixed(1) + '" x ' + facts.heightIn.toFixed(1) + '"' : 'n/a'),
-      'Colors: ' + (facts.objects ? Math.max(1, facts.colors) : 'n/a'),
-      'Quantity and sizes: (fill in)',
-      '',
-      'I am attaching the mockup PNG I downloaded from the designer.'
-    ];
-    window.location.href = 'mailto:' + QUOTE_EMAIL +
-      '?subject=' + encodeURIComponent('Apparel quote request') +
-      '&body=' + encodeURIComponent(lines.join('\n'));
+    try { window.top.location.href = CONTACT_URL; }
+    catch (e) { window.open(CONTACT_URL, '_blank'); }
   });
 
   // ---------- Toast ----------
