@@ -297,7 +297,7 @@
 
   function onCanvasChange() { updateDots(); }
 
-  // ---------- Artwork analysis (for the quote email color count) ----------
+  // ---------- Artwork analysis (for the mockup caption color count) ----------
   function analyzeImageData(imgEl) {
     var s = 160 / Math.max(imgEl.width, imgEl.height);
     var w = Math.max(1, Math.round(imgEl.width * s)), h = Math.max(1, Math.round(imgEl.height * s));
